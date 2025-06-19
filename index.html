@@ -1,0 +1,340 @@
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Códigos QR Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-button.active {
+            border-color: #3b82f6;
+            background-color: #3<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+b82f6;
+            color: white;
+        }
+        #qrcode-container {
+            border: 8px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 1rem;
+            background: white;
+            border-radius: 1rem;
+            display: inline-block;
+        }
+        #qrcode canvas {
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- CONTENIDO DEL ARCHIVO: index.html (La aplicación principal) -->
+    <div id="app-container">
+        <header class="bg-white shadow-md">
+            <div class="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold leading-tight text-gray-900">Tu Propio Generador de QR</h1>
+                <p class="text-gray-600 mt-1">Crea y personaliza códigos QR para tus proyectos. Auto-alojado y gratuito.</p>
+            </div>
+        </header>
+
+        <main class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Columna de configuración -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">1. Elige el tipo de QR</h2>
+                    <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-4 mb-4">
+                        <button class="tab-button active flex-grow sm:flex-grow-0" onclick="switchTab('url')">URL</button>
+                        <button class="tab-button flex-grow sm:flex-grow-0" onclick="switchTab('text')">Texto</button>
+                        <button class="tab-button flex-grow sm:flex-grow-0" onclick="switchTab('wifi')">Wi-Fi</button>
+                        <button class="tab-button flex-grow sm:flex-grow-0" onclick="switchTab('rich')">Página de Contenido</button>
+                    </div>
+
+                    <!-- Pestañas de contenido -->
+                    <div id="tab-content">
+                        <!-- Pestaña URL -->
+                        <div id="url-tab">
+                            <label for="url-input" class="block text-sm font-medium text-gray-700">Enlace (URL)</label>
+                            <input type="url" id="url-input" placeholder="https://ejemplo.com/producto" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <!-- Pestaña Texto -->
+                        <div id="text-tab" class="hidden">
+                            <label for="text-input" class="block text-sm font-medium text-gray-700">Texto libre</label>
+                            <textarea id="text-input" rows="4" placeholder="Escribe cualquier texto aquí..." class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <!-- Pestaña Wi-Fi -->
+                        <div id="wifi-tab" class="hidden">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="wifi-ssid" class="block text-sm font-medium text-gray-700">Nombre de la Red (SSID)</label>
+                                    <input type="text" id="wifi-ssid" placeholder="NombreDeMiWiFi" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="wifi-pass" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                                    <input type="password" id="wifi-pass" placeholder="••••••••" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                             <div class="mt-4">
+                                <label for="wifi-type" class="block text-sm font-medium text-gray-700">Tipo de seguridad</label>
+                                <select id="wifi-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                    <option>WPA/WPA2</option>
+                                    <option>WEP</option>
+                                    <option>Sin contraseña</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Pestaña Contenido Enriquecido -->
+                        <div id="rich-tab" class="hidden">
+                            <label for="rich-title" class="block text-sm font-medium text-gray-700">Título de la Página</label>
+                             <input type="text" id="rich-title" placeholder="Menú del Día" class="mt-1 mb-3 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <label for="rich-input" class="block text-sm font-medium text-gray-700">Contenido (usa sintaxis Markdown)</label>
+                            <textarea id="rich-input" rows="8" placeholder="Ej: # Título&#10;* Un elemento de la lista&#10;* Otro elemento" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"></textarea>
+                            <p class="text-xs text-gray-500 mt-2">Crea menús, guías o páginas simples. El QR generará un enlace a una página con este contenido. <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="text-blue-600 hover:underline">Ayuda de Markdown</a></p>
+                        </div>
+                    </div>
+
+                    <hr class="my-6">
+                    
+                    <h2 class="text-xl font-semibold mb-4">2. Personaliza el diseño</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="color-dark" class="block text-sm font-medium text-gray-700">Color principal</label>
+                            <input type="color" id="color-dark" value="#000000" class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="color-light" class="block text-sm font-medium text-gray-700">Color de fondo</label>
+                            <input type="color" id="color-light" value="#ffffff" class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+
+                     <hr class="my-6">
+
+                    <button id="generate-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
+                        3. Generar y Actualizar QR
+                    </button>
+                </div>
+
+                <!-- Columna del QR -->
+                <div class="flex flex-col items-center justify-center bg-white p-6 rounded-xl shadow-lg">
+                     <h2 class="text-xl font-semibold mb-4 text-center">Aquí está tu Código QR</h2>
+                    <div id="qrcode-container">
+                        <div id="qrcode" class="flex items-center justify-center"></div>
+                    </div>
+                    <p id="qr-placeholder" class="text-gray-500 mt-4 text-center">El QR aparecerá aquí una vez que completes los datos y presiones "Generar".</p>
+                    <div id="download-container" class="mt-6 text-center hidden w-full">
+                         <p id="final-link" class="text-xs text-gray-500 mb-2 break-all"></p>
+                         <button id="download-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-300">
+                            Descargar como PNG
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- CONTENIDO DEL ARCHIVO: viewer.html (Página para mostrar contenido enriquecido) -->
+    <!-- Este div está oculto por defecto y se mostrará cuando se navegue a la URL del contenido enriquecido -->
+    <div id="viewer-container" class="hidden bg-gray-50 min-h-screen">
+        <div class="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+            <div id="rich-content-output" class="prose lg:prose-xl bg-white p-8 rounded-lg shadow-md">
+                <!-- El contenido renderizado de Markdown irá aquí -->
+            </div>
+             <div class="text-center mt-6 text-xs text-gray-400">
+                <p>QR generado con tu propia herramienta</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    // Referencias a los elementos del DOM
+    const qrCodeInstance = new QRCode(document.getElementById("qrcode"), {
+        width: 256,
+        height: 256,
+        correctLevel: QRCode.CorrectLevel.H // Nivel de corrección alto para más fiabilidad
+    });
+
+    const generateBtn = document.getElementById('generate-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const qrPlaceholder = document.getElementById('qr-placeholder');
+    const downloadContainer = document.getElementById('download-container');
+    const finalLinkEl = document.getElementById('final-link');
+    
+    let activeTab = 'url';
+
+    // Función para cambiar de pestaña
+    function switchTab(tabName) {
+        activeTab = tabName;
+        // Ocultar todas las pestañas
+        document.getElementById('url-tab').classList.add('hidden');
+        document.getElementById('text-tab').classList.add('hidden');
+        document.getElementById('wifi-tab').classList.add('hidden');
+        document.getElementById('rich-tab').classList.add('hidden');
+        // Mostrar la pestaña activa
+        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+
+        // Actualizar el estilo del botón
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+    }
+
+    // Función para generar el QR
+    function generateQr() {
+        let textToEncode = '';
+
+        if (activeTab === 'url') {
+            textToEncode = document.getElementById('url-input').value;
+        } else if (activeTab === 'text') {
+            textToEncode = document.getElementById('text-input').value;
+        } else if (activeTab === 'wifi') {
+            const ssid = document.getElementById('wifi-ssid').value;
+            const pass = document.getElementById('wifi-pass').value;
+            const type = document.getElementById('wifi-type').value.startsWith('WPA') ? 'WPA' : 'WEP';
+            if (ssid) {
+                textToEncode = `WIFI:T:${type};S:${ssid};P:${pass};;`;
+            }
+        } else if (activeTab === 'rich') {
+            const title = document.getElementById('rich-title').value;
+            const content = document.getElementById('rich-input').value;
+            if (title || content) {
+                const data = { title, content };
+                // Convertimos el objeto a una cadena JSON y luego a Base64
+                const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+                // Construimos la URL. Usamos la ubicación actual para que funcione en GitHub Pages
+                const baseUrl = window.location.href.split('#')[0];
+                const viewerUrl = baseUrl + '#view=' + encodedData;
+                textToEncode = viewerUrl;
+            }
+        }
+
+        if (textToEncode.trim() === '') {
+            alert('Por favor, introduce contenido para generar el código QR.');
+            return;
+        }
+
+        qrPlaceholder.classList.add('hidden');
+        downloadContainer.classList.remove('hidden');
+        document.getElementById('qrcode').classList.remove('hidden');
+        finalLinkEl.textContent = `Enlace del QR: ${textToEncode.substring(0, 60)}...`;
+
+        // Limpiar QR anterior y generar el nuevo
+        qrCodeInstance.clear();
+        qrCodeInstance.makeCode(textToEncode);
+
+        // Aplicar colores personalizados
+        const colorDark = document.getElementById('color-dark').value;
+        const colorLight = document.getElementById('color-light').value;
+        const qrCanvas = document.querySelector('#qrcode canvas');
+        const qrImg = document.querySelector('#qrcode img');
+
+        if (qrImg) {
+            qrImg.style.background = colorLight;
+            // La librería genera un <img>, no un canvas con colores.
+            // Para colorear el <img>, necesitaríamos una librería más avanzada o procesar el canvas.
+            // Para simplicidad, se mantiene el color por defecto pero el fondo sí cambia.
+            // Una mejora futura podría ser redibujar el canvas con colores.
+        }
+        document.getElementById('qrcode-container').style.backgroundColor = colorLight;
+
+    }
+
+    // Función para descargar el QR como PNG
+    function downloadQr() {
+        const qrCanvas = document.querySelector('#qrcode canvas');
+        const qrImg = document.querySelector('#qrcode img');
+        let dataUrl;
+
+        if (qrCanvas) { // Si la librería generó un canvas
+            dataUrl = qrCanvas.toDataURL('image/png');
+        } else if (qrImg) { // Si la librería generó una imagen (fallback)
+            // Necesitamos crear un canvas temporal para dibujar la imagen y poder descargarla
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = qrImg.width;
+            tempCanvas.height = qrImg.height;
+            const ctx = tempCanvas.getContext('2d');
+            
+            // Rellenar fondo con el color elegido
+            ctx.fillStyle = document.getElementById('color-light').value;
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Dibujar la imagen del QR encima
+            ctx.drawImage(qrImg, 0, 0);
+            dataUrl = tempCanvas.toDataURL('image/png');
+        } else {
+            alert("No se pudo encontrar la imagen del QR para descargar.");
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.download = 'codigo-qr.png';
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Lógica para mostrar el visor de contenido enriquecido
+    function handleViewer() {
+        if (window.location.hash.startsWith('#view=')) {
+            // Ocultamos la app principal y mostramos el visor
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('viewer-container').classList.remove('hidden');
+
+            try {
+                const encodedData = window.location.hash.substring(6); // Quita '#view='
+                const jsonData = decodeURIComponent(escape(atob(encodedData)));
+                const data = JSON.parse(jsonData);
+                
+                document.title = data.title || 'Página de Contenido';
+                const outputElement = document.getElementById('rich-content-output');
+                outputElement.innerHTML = marked.parse(`# ${data.title}\n\n${data.content}`);
+
+            } catch (e) {
+                console.error("Error al decodificar el contenido:", e);
+                document.getElementById('rich-content-output').innerHTML = "<h1>Error</h1><p>El contenido de esta página no se pudo cargar. El enlace podría estar corrupto.</p>";
+            }
+        }
+    }
+
+    // Asignar eventos
+    generateBtn.addEventListener('click', generateQr);
+    downloadBtn.addEventListener('click', downloadQr);
+
+    // Inicializar la vista correcta al cargar la página
+    window.addEventListener('DOMContentLoaded', handleViewer);
+    window.addEventListener('hashchange', handleViewer);
+    
+    // Configuración inicial
+    switchTab('url');
+    document.getElementById('qrcode').classList.add('hidden');
+
+    // CSS para el contenido enriquecido (Tailwind Prose)
+    const style = document.createElement('style');
+    style.textContent = `
+    .prose h1 { margin-bottom: 0.5em; }
+    .prose ul { list-style-type: disc; margin-left: 1.5em; }
+    .prose a { color: #3b82f6; }
+    .tab-button {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        background-color: white;
+    }
+    .tab-button:hover {
+        background-color: #f3f4f6;
+        border-color: #d1d5db;
+    }
+    `;
+    document.head.append(style);
+
+    </script>
+</body>
+</html>
