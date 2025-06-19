@@ -62,7 +62,7 @@
         <header class="bg-white shadow-sm">
             <div class="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <h1 class="text-3xl font-bold tracking-tight text-gray-900">Tu Propio Generador de QR</h1>
-                <p class="text-gray-600 mt-1">Crea y personaliza códigos QR únicos, ahora con banners.</p>
+                <p class="text-gray-600 mt-1">Crea y personaliza códigos QR únicos, ahora con banners e imágenes.</p>
             </div>
         </header>
 
@@ -78,11 +78,11 @@
                             <button class="tab-button" onclick="switchTab('text')">Texto</button>
                             <button class="tab-button" onclick="switchTab('wifi')">Wi-Fi</button>
                             <button class="tab-button" onclick="switchTab('rich')">Página</button>
+                            <button class="tab-button" onclick="switchTab('image')">Imagen</button>
                         </div>
                     </div>
 
                     <div id="tab-content">
-                        <!-- Pestañas de contenido (igual que antes) -->
                          <div id="url-tab">
                             <label for="url-input" class="block text-sm font-medium text-gray-700">Enlace (URL)</label>
                             <input type="url" id="url-input" placeholder="https://ejemplo.com" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -116,6 +116,12 @@
                             <input type="text" id="rich-title" placeholder="Menú del Día" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             <label for="rich-input" class="block text-sm font-medium text-gray-700">Contenido (usa Markdown)</label>
                             <textarea id="rich-input" rows="8" placeholder="Ej: # Título&#10;* Un elemento" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"></textarea>
+                        </div>
+                         <div id="image-tab" class="hidden space-y-3">
+                            <label for="image-upload-input" class="block text-sm font-medium text-gray-700">Sube tu imagen</label>
+                             <input type="file" id="image-upload-input" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                             <p class="text-xs text-gray-500">La imagen se mostrará en una página al escanear el QR. Límite recomendado: 1MB.</p>
+                             <img id="image-preview" class="hidden rounded-md max-h-40 mx-auto border shadow-sm">
                         </div>
                     </div>
                     
@@ -166,7 +172,6 @@
                 <div class="flex flex-col items-center justify-start bg-white p-6 rounded-2xl shadow-lg">
                     <h2 class="text-2xl font-bold mb-4 text-center text-gray-900">Tu Diseño Final</h2>
                     
-                    <!-- ESTE ES EL CONTENEDOR QUE SE DESCARGARÁ -->
                     <div id="final-qr-wrapper">
                         <div id="qrcode-container">
                             <div id="qrcode" class="w-[256px] h-[256px]"></div>
@@ -178,9 +183,8 @@
                             </div>
                         </div>
                     </div>
-                    <!-- FIN DEL CONTENEDOR A DESCARGAR -->
 
-                    <p id="qr-placeholder" class="text-gray-500 mt-6 text-center">El QR aparecerá aquí una vez que completes los datos.</p>
+                    <p id="qr-placeholder" class="text-gray-500 mt-6 text-center">El QR aparecerá aquí.</p>
                     <div id="download-container" class="mt-6 text-center hidden w-full">
                          <button id="download-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-300">
                             Descargar como PNG
@@ -191,8 +195,17 @@
         </main>
     </div>
 
-    <!-- Visor de contenido enriquecido (sin cambios) -->
-    <div id="viewer-container" class="hidden"></div>
+    <!-- Visor de contenido enriquecido (se usa también para la imagen) -->
+    <div id="viewer-container" class="hidden bg-gray-50 min-h-screen">
+        <div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+            <div id="viewer-content-output" class="bg-white p-4 md:p-8 rounded-lg shadow-md">
+                <!-- El contenido (Markdown o Imagen HTML) irá aquí -->
+            </div>
+             <div class="text-center mt-6 text-xs text-gray-400">
+                <p>QR generado con tu propia herramienta</p>
+            </div>
+        </div>
+    </div>
 
     <script>
     // --- Referencias a elementos del DOM ---
@@ -206,10 +219,15 @@
     const bannerToggle = document.getElementById('banner-toggle');
     const scanMeBanner = document.getElementById('scan-me-banner');
     const finalQrWrapper = document.getElementById('final-qr-wrapper');
+    const imageUploadInput = document.getElementById('image-upload-input');
+    const imagePreview = document.getElementById('image-preview');
+
 
     let activeTab = 'url';
     let uploadedLogo = null;
     let qrCodeInstance = null;
+    let uploadedImageAsB64 = null;
+
 
     // --- SVG del Icono de Globo ---
     const globeSVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="none" stroke="black" stroke-width="4"/><ellipse cx="50" cy="50" rx="20" ry="48" fill="none" stroke="black" stroke-width="4"/><path d="M2,50 A48,48 0 0,1 98,50 M12,30 A60,60 0 0,0 88,30 M12,70 A60,60 0 0,1 88,70" fill="none" stroke="black" stroke-width="4"/></svg>`;
@@ -219,7 +237,7 @@
     // --- Lógica de la Interfaz ---
     function switchTab(tabName) {
         activeTab = tabName;
-        ['url', 'text', 'wifi', 'rich'].forEach(id => document.getElementById(`${id}-tab`).classList.add('hidden'));
+        ['url', 'text', 'wifi', 'rich', 'image'].forEach(id => document.getElementById(`${id}-tab`).classList.add('hidden'));
         document.getElementById(`${tabName}-tab`).classList.remove('hidden');
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
@@ -231,16 +249,26 @@
             reader.onload = (e) => {
                 uploadedLogo = e.target.result;
                 clearLogoBtn.classList.remove('hidden');
-                globeToggle.checked = false; // Desmarcar el globo si se sube un logo
+                globeToggle.checked = false; 
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    });
+    
+    imageUploadInput.addEventListener('change', (event) => {
+         if (event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImageAsB64 = e.target.result;
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
             };
             reader.readAsDataURL(event.target.files[0]);
         }
     });
     
     globeToggle.addEventListener('change', () => {
-        if (globeToggle.checked) {
-            clearLogo(); // Limpiar el logo si se selecciona el globo
-        }
+        if (globeToggle.checked) { clearLogo(); }
     });
 
     function clearLogo() {
@@ -253,33 +281,43 @@
     // --- Lógica Principal del Generador de QR ---
     function generateQr() {
         let textToEncode = '';
-        // ... (lógica para obtener textToEncode, sin cambios) ...
+        let promiseToEncode = null;
+
         if (activeTab === 'url') { textToEncode = document.getElementById('url-input').value; } 
         else if (activeTab === 'text') { textToEncode = document.getElementById('text-input').value; }
         else if (activeTab === 'wifi') { const ssid = document.getElementById('wifi-ssid').value; const pass = document.getElementById('wifi-pass').value; const type = document.getElementById('wifi-type').value.startsWith('WPA') ? 'WPA' : 'WEP'; if (ssid) { textToEncode = `WIFI:T:${type};S:${ssid};P:${pass};;`; } }
         else if (activeTab === 'rich') { const title = document.getElementById('rich-title').value; const content = document.getElementById('rich-input').value; if (title || content) { const data = { title, content }; const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(data)))); const baseUrl = window.location.href.split('#')[0]; textToEncode = baseUrl + '#view=' + encodedData; } }
+        else if (activeTab === 'image') {
+            if (!uploadedImageAsB64) {
+                 alert('Por favor, sube una imagen para generar el QR.');
+                 return;
+            }
+            const htmlContent = `<img src="${uploadedImageAsB64}" alt="Imagen QR" style="width:100%; max-width:100vw; max-height:100vh; object-fit: contain; display:block; margin:auto;">`;
+            const data = { title: "Imagen QR", content: htmlContent, isImage: true };
+            const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+            const baseUrl = window.location.href.split('#')[0];
+            textToEncode = baseUrl + '#view=' + encodedData;
+        }
+
 
         if (textToEncode.trim() === '') {
             alert('Por favor, introduce contenido para generar el código QR.');
             return;
         }
 
+        renderQrCode(textToEncode);
+    }
+    
+    function renderQrCode(data) {
         qrPlaceholder.classList.add('hidden');
         downloadContainer.classList.remove('hidden');
         finalQrWrapper.classList.remove('hidden');
         
-        // Mostrar u ocultar el banner inferior según el checkbox
-        if (bannerToggle.checked) {
-            scanMeBanner.classList.remove('hidden');
-        } else {
-            scanMeBanner.classList.add('hidden');
-        }
+        if (bannerToggle.checked) { scanMeBanner.classList.remove('hidden'); } 
+        else { scanMeBanner.classList.add('hidden'); }
 
         const qrOptions = {
-            width: 256,
-            height: 256,
-            data: textToEncode,
-            margin: 0, // El padding lo da el contenedor ahora
+            width: 256, height: 256, data: data, margin: 0,
             qrOptions: { errorCorrectionLevel: 'H' },
             dotsOptions: { color: document.getElementById('color-dark').value, type: 'dots' },
             backgroundOptions: { color: document.getElementById('color-light').value },
@@ -288,20 +326,16 @@
             imageOptions: { crossOrigin: "anonymous", margin: 4, imageSize: 0.4 }
         };
 
-        // Añadir logo de globo o el subido por el usuario
-        if (globeToggle.checked) {
-            qrOptions.image = globeSVGDataUrl;
-        } else if (uploadedLogo) {
-            qrOptions.image = uploadedLogo;
-        }
+        if (globeToggle.checked) { qrOptions.image = globeSVGDataUrl; } 
+        else if (uploadedLogo) { qrOptions.image = uploadedLogo; }
         
         const qrContainer = document.getElementById('qrcode');
-        qrContainer.innerHTML = ''; // Limpiar QR anterior
+        qrContainer.innerHTML = '';
         qrCodeInstance = new QRCodeStyling(qrOptions);
         qrCodeInstance.append(qrContainer);
     }
 
-    // --- Lógica de Descarga ---
+    // --- Lógica de Descarga y Visor ---
     function downloadQr() {
         const targetNode = document.getElementById('final-qr-wrapper');
         if (!targetNode || !qrCodeInstance) {
@@ -309,31 +343,62 @@
             return;
         }
         
-        // Usamos html2canvas para capturar el contenedor entero
         html2canvas(targetNode, {
-            backgroundColor: '#ffffff', // Forzar fondo blanco en la imagen guardada
-            useCORS: true, // Necesario para imágenes externas (logos)
-            scale: 3 // Aumentar la resolución para mejor calidad
+            backgroundColor: '#ffffff', useCORS: true, scale: 3 
         }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'codigo-qr-con-banner.png';
+            link.download = 'codigo-qr-personalizado.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
+    }
+
+    function handleViewer() {
+        if (window.location.hash.startsWith('#view=')) {
+            document.getElementById('app-container').classList.add('hidden');
+            const viewerContainer = document.getElementById('viewer-container');
+            viewerContainer.classList.remove('hidden');
+
+            try {
+                const encodedData = window.location.hash.substring(6);
+                const jsonData = decodeURIComponent(escape(atob(encodedData)));
+                const data = JSON.parse(jsonData);
+                
+                document.title = data.title || 'Página de Contenido';
+                const outputElement = document.getElementById('viewer-content-output');
+                
+                // Si es una imagen, inyecta el HTML directamente. Si no, usa Marked.
+                if (data.isImage) {
+                    viewerContainer.style.display = 'flex';
+                    viewerContainer.style.alignItems = 'center';
+                    viewerContainer.style.justifyContent = 'center';
+                    outputElement.innerHTML = data.content;
+                    outputElement.style.padding = '0';
+                    outputElement.style.background = 'transparent';
+                    outputElement.style.boxShadow = 'none';
+                } else {
+                    viewerContainer.style.display = 'block'; // Estilo por defecto
+                    outputElement.innerHTML = marked.parse(`# ${data.title || ''}\n\n${data.content || ''}`);
+                }
+
+            } catch (e) {
+                console.error("Error al decodificar el contenido:", e);
+                document.getElementById('viewer-content-output').innerHTML = "<h1>Error</h1><p>El contenido no se pudo cargar.</p>";
+            }
+        }
     }
     
     // --- Inicialización y Eventos ---
     generateBtn.addEventListener('click', generateQr);
     downloadBtn.addEventListener('click', downloadQr);
-    
-    // Configuración inicial
-    switchTab('url');
-    finalQrWrapper.classList.add('hidden'); // Ocultar al inicio
-    document.addEventListener('DOMContentLoaded', () => {
-        // Generar un QR de ejemplo al cargar
-        document.getElementById('url-input').value = "https://www.google.com";
+    window.addEventListener('DOMContentLoaded', () => {
+        handleViewer();
+        switchTab('url');
+        finalQrWrapper.classList.add('hidden');
+        document.getElementById('url-input').value = "https://github.com";
         generateQr();
     });
+    window.addEventListener('hashchange', handleViewer);
 
     </script>
 </body>
